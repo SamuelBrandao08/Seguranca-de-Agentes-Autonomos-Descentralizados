@@ -10,14 +10,17 @@ aca-py start \
  --log-level debug \
  --endpoint http://localhost:8010 \
  --label Holder \
- --seed 000000000000000000000000Steward1 \
+ --seed "Holder00000000000000000000000002" \
  --genesis-url http://localhost:9000/genesis \
  --ledger-pool-name localindypool \
  --wallet-key 123456 \
- --wallet-name holder_wallet_clean \
+ --wallet-name holder_wallet \
  --wallet-type askar-anoncreds \
+ --endorser-protocol-role endorser \
  --admin 0.0.0.0 8011 \
  --admin-insecure-mode \
+ --public-invites \
+ --webhook-url http://localhost:5001 \
  --auto-provision \
  --auto-accept-invites \
  --auto-accept-requests \
@@ -26,7 +29,11 @@ aca-py start \
  --auto-respond-credential-offer \
  --auto-store-credential \
  --auto-respond-presentation-request \
- --auto-respond-presentation-proposal
+ --auto-respond-presentation-proposal \
+ --debug-connections \
+ --debug-credentials \
+ --debug-presentations \
+ --requests-through-public-did
 """
 
 print(f"Iniciando Holder na porta admin 8011...")
