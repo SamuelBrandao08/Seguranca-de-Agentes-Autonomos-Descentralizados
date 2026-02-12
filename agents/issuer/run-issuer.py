@@ -11,23 +11,28 @@ aca-py start \
  --log-level debug \
  --endpoint http://localhost:8000 \
  --label Issuer \
- --seed 000000000000000000000000Steward1 \
+ --seed "Issuer00000000000000000000000002" \
  --genesis-url http://localhost:9000/genesis \
  --ledger-pool-name localindypool \
  --wallet-key 123456 \
- --wallet-name issuer_wallet_prod \
+ --wallet-name issuer_wallet \
  --wallet-type askar-anoncreds \
  --admin 0.0.0.0 8001 \
  --admin-insecure-mode \
  --public-invites \
+ --webhook-url http://localhost:3000 \
  --auto-accept-invites \
  --auto-accept-requests \
  --auto-ping-connection \
  --auto-respond-messages \
  --auto-respond-credential-proposal \
  --auto-respond-credential-request \
+ --auto-respond-credential-offer \
+ --debug-connections \
+ --debug-credentials \
+ --debug-presentations \
  --auto-provision \
- --requests-through-public-did
+ --requests-through-public-did \
 """
 
 print(f"Iniciando Issuer na porta admin 8001...")
