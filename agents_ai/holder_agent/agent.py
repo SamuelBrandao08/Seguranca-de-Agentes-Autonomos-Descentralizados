@@ -1,6 +1,7 @@
 # agent.py
 from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
+from typing import Any, Dict
 
 from contextlib import asynccontextmanager
 import requests
@@ -8,7 +9,13 @@ import logging
 import aiohttp
 
 from controller import acapy_controller
+from controller import acapy_controller_v2 as ac2
 from agents_ai.holder_agent.llm import call_ollama
+from core.state import (
+    STATE,
+    OPERADORA_ADMIN,
+    CLIENTE_ADMIN
+)
 
 app_state = {}
 
@@ -25,24 +32,25 @@ class Message(BaseModel):
     content: str
 
 class ChatInput(BaseModel):
-    message: str
-    params: str
+    message: str | dict
+    params: str | dict | None = None
 
-STATE = {
-    "my_did": None,
-    "operadora_did": None,
-    "kyc_schema_id": None,
-    "kyc_cred_def_id": None,
-    "plano_schema_id": None,
-    "plano_cred_def_id": None,
-    "invitation_msg_id": None,
-    "conn_id_operadora": None,
-    "conn_id_client": None
-}
+# STATE = {
+#     "my_did": None,
+#     "operadora_did": None,
+#     "kyc_schema_id": None,
+#     "kyc_cred_def_id": None,
+#     "plano_schema_id": None,
+#     "plano_cred_def_id": None,
+#     "invitation_msg_id": None,
+#     "conn_id_operadora": None,
+#     "conn_id_client": None
+# }
 
 @app.post("/chat")
 async def chat_endpoint(inp: ChatInput):
     # 1. IA interpreta
+    
     cmd = call_ollama(inp.message)
     func = cmd.get("function_name")
     params = cmd.get("parameters", {})
@@ -56,8 +64,9 @@ async def chat_endpoint(inp: ChatInput):
     state = {}
 
     try:
-        if func == "setup_telco":
-            result = await acapy_controller.setup_telco(session)
+        if func == "accept_connection":
+            invitation = inp.message
+            result = await ac2.accept_connection(session, invitation)
         elif func == "conectar_cliente":
             result, state = await acapy_controller.conectar_cliente(session)
             STATE.update(state)
@@ -96,7 +105,7 @@ async def on_connections(request: Request):
     if data.get('state') == "active":
         STATE['conn_id_client'] = data['connection_id']
         STATE['invitation_msg_id'] = data['invitation_msg_id']
-        STATE['my_did'] = data['my_did']
+        STATE['cliente_did'] = data['my_did']
         STATE['operadora_did'] = data['their_did']
 
         print("\n EVENTO DE CONEXÃO RECEBIDO:")
@@ -105,6 +114,12 @@ async def on_connections(request: Request):
         return {"status": "ok"}
     else:        
         return {"status": "error"}
+
+
+@app.post("/topic/present_proof_v2_0")
+async def receive_proof(request: Request):
+    data = await request.json()
+    print(data)
 
 
 @app.post("/topic/basicmessages")

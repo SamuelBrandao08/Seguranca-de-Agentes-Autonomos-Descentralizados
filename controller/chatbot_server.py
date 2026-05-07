@@ -4,8 +4,8 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from contextlib import asynccontextmanager
 
-import acapy_controller
-import ollama_client
+# import acapy_controller
+# import ollama_client
 
 app_state = {}
 
@@ -43,12 +43,16 @@ async def chat_endpoint(inp: ChatInput):
             result = await acapy_controller.ativar_plano(session, **params)
         elif func == "verificar_acesso":
             result = await acapy_controller.verificar_acesso(session)
+        elif func == "basicmessage":
+            result = await acapy_controller.send_basicmessage(session, ) # connection_id?
         else:
             result = f"Função desconhecida: {func}"
     except Exception as e:
         result = f"Erro de execução: {str(e)}"
 
     return {"response": result}
+
+
 
 if __name__ == "__main__":
     import uvicorn

@@ -19,8 +19,8 @@ REGRAS CRÍTICAS:
 
 LISTA DE FUNÇÕES PERMITIDAS:
 
-1. setup_telco
-   - Gatilhos: "Iniciar sistema", "Configurar".
+1. accept_connection
+   - Gatilhos: '"@type":"https://didcomm.org/out-of-band/1.1/invitation"'
    - Params: {}
 
 2. conectar_cliente
@@ -51,8 +51,12 @@ Exemplo de Saída Correta:
 }
 """
 
-def call_ollama(prompt: str) -> Dict[str, Any]:
+def call_ollama(prompt: str | dict) -> Dict[str, Any]:
     logging.info(f"Enviando para Phi-3: {prompt}")
+
+    if isinstance(prompt, dict):
+        prompt = json.dumps(prompt)
+
     payload = {
         "model": MODEL_NAME,
         "messages": [

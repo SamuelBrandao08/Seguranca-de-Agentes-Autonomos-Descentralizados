@@ -115,7 +115,7 @@ async def conectar_cliente(session: aiohttp.ClientSession) -> str:
     
     if not inv_resp: return "Erro ao criar convite na Operadora."
 
-    # 2. Cliente Aceita   CLIENTE
+    # 2. Cliente Aceita   
     acc_resp = await admin_request(session, "POST", f"{CLIENTE_ADMIN}/out-of-band/receive-invitation", inv_resp["invitation"])
     if acc_resp:
         STATE['conn_id_client'] = acc_resp['connection_id']
@@ -125,7 +125,7 @@ async def conectar_cliente(session: aiohttp.ClientSession) -> str:
     else:
         return "Erro ao receber convite no Cliente."
 
-    # 3. Resgatar ID da Conexão  SERVIDOR
+    # 3. Resgatar ID da Conexão
     await asyncio.sleep(3)
     
     #print("State invitation: ", STATE['invitation_msg_id'])

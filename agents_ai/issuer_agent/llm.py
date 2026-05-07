@@ -19,15 +19,11 @@ REGRAS CRÍTICAS:
 
 LISTA DE FUNÇÕES PERMITIDAS:
 
-1. setup_telco
+1. init_telecom
    - Gatilhos: "Iniciar sistema", "Configurar".
    - Params: {}
 
-2. conectar_cliente
-   - Gatilhos: "Conectar cliente", "Novo assinante", "Onboarding".
-   - Params: {}
-
-3. ativar_plano
+2. activate_line
    - Gatilhos: "Ativar plano", "Vender promoção", "Quero 50GB".
    - Params:
      - "nome_plano": (string) Ex: "Promoção Turbo".
@@ -37,7 +33,7 @@ LISTA DE FUNÇÕES PERMITIDAS:
    - Gatilhos: "Verificar acesso", "Validar plano".
    - Params: {}
 
-5. enviar_mensagem
+5. send_message
    - Gatilhos: "Enviar mensagem".
    - Params: {}
 

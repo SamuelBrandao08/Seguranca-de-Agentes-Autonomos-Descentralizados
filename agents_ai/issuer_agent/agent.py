@@ -6,8 +6,15 @@ from contextlib import asynccontextmanager
 import requests
 import logging
 import aiohttp
+import json
 
+from core.state import (
+    STATE,
+    OPERADORA_ADMIN,
+    CLIENTE_ADMIN
+)
 from controller import acapy_controller
+from controller import acapy_controller_v2 as ac2
 from agents_ai.issuer_agent.llm import call_ollama
 
 app_state = {}
@@ -15,8 +22,19 @@ app_state = {}
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     app_state["session"] = aiohttp.ClientSession()
+    session = app_state["session"]
+
+    response = ""
+    try:
+        response = await ac2.init_telecom(session)
+        print("Init telecom:", json.dumps(response))
+
+    except Exception as e:
+        print("Erro de execução:", e)
+
     yield
-    await app_state["session"].close()
+    await session.close()
+    # await app_state["session"].close()
 
 app = FastAPI(lifespan=lifespan)
 
@@ -28,18 +46,19 @@ class ChatInput(BaseModel):
     message: str
     params: str
 
-STATE = {
-    "my_did": None,
-    "client_did": None,
-    "kyc_schema_id": None,
-    "kyc_cred_def_id": None,
-    "plano_schema_id": None,
-    "plano_cred_def_id": None,
-    "invitation_msg_id": None,
-    "conn_id_operadora": None,
-    "conn_id_client": None
-    # conn_id_verificador removido
-}
+
+
+# STATE = {
+#     "my_did": None,
+#     "client_did": None,
+#     "kyc_schema_id": None,
+#     "kyc_cred_def_id": None,
+#     "plano_schema_id": None,
+#     "plano_cred_def_id": None,
+#     "invitation_msg_id": None,
+#     "conn_id_operadora": None,
+#     "conn_id_client": None
+# }
 
 @app.post("/chat")
 async def chat_endpoint(inp: ChatInput):
@@ -54,20 +73,23 @@ async def chat_endpoint(inp: ChatInput):
     # 2. Controller executa
     session = app_state["session"]
     result = ""
-    state = {}
 
     try:
-        if func == "setup_telco":
-            result = await acapy_controller.setup_telco(session)
-        elif func == "conectar_cliente":
-            result, state = await acapy_controller.conectar_cliente(session)
-            STATE.update(state)
-            print("DADOS DO AGENTE: ", STATE['conn_id_client'])
-        elif func == "ativar_plano":
-            result = await acapy_controller.ativar_plano(session, **params)
-        elif func == "verificar_acesso":
-            result = await acapy_controller.verificar_acesso(session)
-        elif func == "enviar_mensagem":
+        if func == "init_telecom":
+            result = await ac2.init_telecom(session)
+        elif func == "generate_schemas":
+            result = await ac2.generate_schemas(session)
+        elif func == "activate_plan":
+            result = await ac2.activate_line(session, params)
+        elif func == "change_plan":
+            result = await ac2.change_plan(session)
+        elif func == "suspend_service":
+            result = await ac2.suspend_service(session)
+        elif func == "cancel_contract":
+            result = await ac2.cancel_contract(session)
+        elif func == "generate_invoice":
+            result = await ac2.generate_invoice(session)
+        elif func == "send_message":
             conn_id = acapy_controller.STATE.get("conn_id_operadora")
             url = acapy_controller.OPERADORA_ADMIN
             result = await acapy_controller.enviar_mensagem(session, url, conn_id, inp.params) # connection_id?
@@ -78,6 +100,7 @@ async def chat_endpoint(inp: ChatInput):
 
     return {"response": result}
 
+
 ## WEBHOOK
 @app.post("/topic/out-of-band")
 async def on_invitation(request: Request):
@@ -87,10 +110,15 @@ async def on_invitation(request: Request):
 @app.post("/topic/connections")
 async def on_connections(request: Request):
     data = await request.json()
+
+    session = app_state["session"]
     if data.get('state') == "active":
+        did = data['their_did']
+        await ac2.approve_connection(session, did)
+        print('EXECUTOU APPROVE_CONECTION')
         STATE['conn_id_operadora'] = data['connection_id']
         STATE['invitation_msg_id'] = data['invitation_msg_id']
-        STATE['my_did'] = data['my_did']
+        STATE['operadora_did'] = data['my_did']
         STATE['client_did'] = data['their_did']
 
         print("\n EVENTO DE CONEXÃO RECEBIDO:")
@@ -99,6 +127,12 @@ async def on_connections(request: Request):
         return {"status": "ok"}
     else:        
         return {"status": "error"}
+
+
+@app.post("/topic/present_proof_v2_0")
+async def receive_proof(request: Request):
+    data = await request.json()
+    print(data)
 
 
 @app.post("/topic/basicmessages")
@@ -111,6 +145,10 @@ async def on_message(request: Request):
     # )
 
     print(f"Você recebeu uma mensagem segura DIDComm: {data}")
+
+
+
+    
 
 
 if __name__ == "__main__":

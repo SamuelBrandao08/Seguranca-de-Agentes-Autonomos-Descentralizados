@@ -36,6 +36,10 @@ LISTA DE FUNÇÕES PERMITIDAS:
    - Gatilhos: "Verificar acesso", "Validar plano".
    - Params: {}
 
+5. enviar_mensagem
+   - Gatilhos: "Enviar mensagem".
+   - Params: {}
+
 Exemplo de Saída Correta:
 {
   "function_name": "ativar_plano",

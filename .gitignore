@@ -1,0 +1,5 @@
+# Ignorar diretorios e arquivos
+api_webhook/
+controller/chatbot_server.py
+controller/ollama_client.py
+agents/verifier/
